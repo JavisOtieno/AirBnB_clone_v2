@@ -1,1 +1,1 @@
-Web_Static index.html
+This directory implements webpage design.
