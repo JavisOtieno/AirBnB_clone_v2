@@ -1,20 +1,23 @@
 #!/usr/bin/python3
 """
-Create a tarball containing the contents of web_static
+Fabric script to genereate tgz archive
+execute: fab -f 1-pack_web_static.py do_pack
 """
 
-from os.path import isfile, join
-from shlex import quote
-from time import strftime
-from fabric.api import local
+from datetime import datetime
+from fabric.api import *
 
 
 def do_pack():
     """
-    Archive the contents of web_static
+    making an archive on web_static folder
     """
-    now = strftime('%Y%m%d%H%M%S')
-    tgz = join('versions', 'web_static_{}.tgz'.format(now))
+
+    time = datetime.now()
+    archive = 'web_static_' + time.strftime("%Y%m%d%H%M%S") + '.' + 'tgz'
     local('mkdir -p versions')
-    local('tar -czf {} web_static'.format(quote(tgz)))
-    return tgz if isfile(tgz) else None
+    create = local('tar -cvzf versions/{} web_static'.format(archive))
+    if create is not None:
+        return archive
+    else:
+        return None

@@ -1,28 +1,44 @@
 #!/usr/bin/env bash
-#
-# Set up Holberton web servers for the deployment of web_static
+# Prepare my webservers (web-01 & web-02)
 
-apt update
-apt -y install nginx
+# uncomment for easy debugging
+#set -x
 
-ufw allow 'Nginx HTTP'
+# colors
+blue='\e[1;34m'
+#brown='\e[0;33m'
+green='\e[1;32m'
+reset='\033[0m'
 
-mkdir -p /data/web_static/shared /data/web_static/releases/test
+echo -e "${blue}Updating and doing some minor checks...${reset}\n"
 
-cat > /data/web_static/releases/test/index.html << 'EOF'
-<html>
-  <head>
-  </head>
-  <body>
-    Hello World
-  </body>
-</html>
-EOF
+# install nginx if not present
+if [ ! -x /usr/sbin/nginx ]; then
+	sudo apt-get update -y -qq && \
+	     sudo apt-get install -y nginx
+fi
 
-ln -fns /data/web_static/releases/test /data/web_static/current
+echo -e "\n${blue}Setting up some minor stuff.${reset}\n"
 
-chown -hR ubuntu:ubuntu /data
+# Create directories...
+sudo mkdir -p /data/web_static/releases/test /data/web_static/shared/
 
-sed -i '/^\tlisten 80 default_server;$/i location /hbnb_static/ { alias /data/web_static/current/; }' /etc/nginx/sites-available/default
+# create index.html for test directory
+echo "<h1>Welcome to th3gr00t.tech <\h1>" | sudo dd status=none of=/data/web_static/releases/test/index.html
 
-service nginx restart
+# create symbolic link
+sudo ln -sf /data/web_static/releases/test /data/web_static/current
+
+# give user ownership to directory
+sudo chown -R ubuntu:ubuntu /data/
+
+# backup default server config file
+sudo cp /etc/nginx/sites-enabled/default nginx-sites-enabled_default.backup
+
+# Set-up the content of /data/web_static/current/ to redirect
+# to domain.tech/hbnb_static
+sudo sed -i '37i\\tlocation /hbnb_static/ {\n\t\talias /data/web_static/current/;\n\t}\n' /etc/nginx/sites-available/default
+
+sudo service nginx restart
+
+echo -e "${green}Completed${reset}"
